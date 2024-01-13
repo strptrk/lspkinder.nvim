@@ -2,6 +2,9 @@
 
 This tiny plugin adds vscode-like pictograms to neovim built-in lsp:
 
+## NOTE
+This fork is only for myself. I advise against using it.
+
 ![Screenshot](https://github.com/onsails/lspkind-nvim/raw/images/images/screenshot.png "Screenshot")
 <sup>[nvim-compe](https://github.com/hrsh7th/nvim-compe), [vim-vsnip](https://github.com/hrsh7th/vim-vsnip), [vim-vsnip-integ](https://github.com/hrsh7th/vim-vsnip-integ), [jellybeans-nvim](https://github.com/metalelf0/jellybeans-nvim)</sup>
 
@@ -17,26 +20,6 @@ Wherever you configure lsp put the following lua command:
 
 ```lua
 require('lspkind').init({
-    -- DEPRECATED (use mode instead): enables text annotations
-    --
-    -- default: true
-    -- with_text = true,
-
-    -- defines how annotations are shown
-    -- default: symbol
-    -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
-    mode = 'symbol_text',
-
-    -- default symbol map
-    -- can be either 'default' (requires nerd-fonts font) or
-    -- 'codicons' for codicon preset (requires vscode-codicons font)
-    --
-    -- default: 'default'
-    preset = 'codicons',
-
-    -- override preset symbols
-    --
-    -- default: {}
     symbol_map = {
       Text = "󰉿",
       Method = "󰆧",
@@ -74,7 +57,6 @@ local lspkind = require('lspkind')
 cmp.setup {
   formatting = {
     format = lspkind.cmp_format({
-      mode = 'symbol', -- show only symbol annotations
       maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
                      -- can also be a function to dynamically calculate max width such as 
                      -- maxwidth = function() return math.floor(0.45 * vim.o.columns) end,

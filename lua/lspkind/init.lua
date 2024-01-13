@@ -1,63 +1,102 @@
-local lspkind = {}
-local fmt = string.format
-
-local kind_presets = {
-  default = {
-    -- if you change or add symbol here
-    -- replace corresponding line in readme
-    Text = "󰉿",
-    Method = "󰆧",
-    Function = "󰊕",
-    Constructor = "",
-    Field = "󰜢",
-    Variable = "󰀫",
-    Class = "󰠱",
-    Interface = "",
-    Module = "",
-    Property = "󰜢",
-    Unit = "󰑭",
-    Value = "󰎠",
-    Enum = "",
-    Keyword = "󰌋",
-    Snippet = "",
-    Color = "󰏘",
-    File = "󰈙",
-    Reference = "󰈇",
-    Folder = "󰉋",
-    EnumMember = "",
-    Constant = "󰏿",
-    Struct = "󰙅",
-    Event = "",
-    Operator = "󰆕",
-    TypeParameter = "",
-  },
-  codicons = {
-    Text = "",
-    Method = "",
-    Function = "",
-    Constructor = "",
-    Field = "",
-    Variable = "",
-    Class = "",
-    Interface = "",
-    Module = "",
-    Property = "",
-    Unit = "",
-    Value = "",
-    Enum = "",
-    Keyword = "",
-    Snippet = "",
-    Color = "",
-    File = "",
-    Reference = "",
-    Folder = "",
-    EnumMember = "",
-    Constant = "",
-    Struct = "",
-    Event = "",
-    Operator = "",
-    TypeParameter = "",
-  },
+local symbol_preset = {
+  -- {{{ Text
+  Text = "",
+  String = "",
+  StringRegex = "󰑑",
+  StringEscape = "󱔁",
+  PunctuationSpecial = "",
+  Character = "",
+  Comment = "󰆉",
+  Spell = "󰓆",
+  Nospell = "󰓆",
+  -- }}}
+  -- {{{ Programming keyword
+  Symbol = "󱄑",
+  Storageclass = "",
+  Method = "",
+  Function = "",
+  FunctionKeyword = "",
+  KeywordFunction = "",
+  FunctionCall = "",
+  Constructor = "",
+  Field = "ﰠ",
+  Class = "ﴯ",
+  _Parent = "ﴯ",
+  Interface = "",
+  Module = "",
+  Property = "ﰠ",
+  FunctionMacro = "",
+  Repeat = "󰑖",
+  Error = "",
+  None = "",
+  Enum = "",
+  Conditional = "",
+  Keyword = "",
+  KeywordReturn = "󰌑",
+  Namespace = "",
+  Reference = "",
+  Operator = "",
+  KeywordOperator = "",
+  Define = "",
+  Include = "󰼢",
+  Struct = "פּ",
+  TypeQualifier = "󰉺",
+  Event = "",
+  -- }}}
+  -- {{{ Variable types
+  Unit = "塞",
+  Variable = "",
+  Type = "",
+  Boolean = "",
+  TypeBuiltin = "",
+  Value = "",
+  Number = "",
+  Constant = "",
+  ConstantBuiltin = "",
+  EnumMember = "",
+  TypeParameter = "",
+  Parameter = "",
+  -- }}}
+  -- {{{ Misc
+  Snippet = "",
+  Color = "",
+  File = "",
+  Folder = "",
+  Conceal = "󰰀",
+  -- }}}
+  -- {{{ Markdown items
+  NeorgHeadings1Title = "󰉫",
+  NeorgHeadings2Title = "󰉬",
+  NeorgHeadings3Title = "󰉭",
+  NeorgHeadings4Title = "󰉮",
+  NeorgHeadings5Title = "󰉯",
+  NeorgHeadings6Title = "󰉰",
+  NeorgHeadings1Prefix = "󰉫",
+  NeorgHeadings2Prefix = "󰉬",
+  NeorgHeadings3Prefix = "󰉭",
+  NeorgHeadings4Prefix = "󰉮",
+  NeorgHeadings5Prefix = "󰉯",
+  NeorgHeadings6Prefix = "󰉰",
+  NeorgListsUnorderedPrefix = "",
+  NeorgLinksLocationDelimiter = "",
+  NeorgAnchorsDefinitionDelimiter = "",
+  NeorgAnchorsDeclaration = "",
+  NeorgAnchors = "",
+  NeorgLinksLocationUrl = "",
+  TextTitle1 = "󰉫",
+  TextTitle2 = "󰉬",
+  TextTitle3 = "󰉭",
+  TextTitle4 = "󰉮",
+  TextTitle5 = "󰉯",
+  TextTitle6 = "󰉰",
+  TextUri = "",
+  TextReference = "",
+  TextEnvironment = "󰅩",
+  TextEnvironmentName = "󰅩",
+  TextEmphasis = "",
+  TextStrong = "",
+  -- }}}
+  unknown = ""
 }
 
 local kind_order = {
@@ -87,102 +126,77 @@ local kind_order = {
   "Operator",
   "TypeParameter",
 }
-local kind_len = 25
 
-local function get_symbol(kind)
-  local symbol = lspkind.symbol_map[kind]
-  return symbol or ""
-end
+local lspkind = {}
 
-local modes = {
-  ["text"] = function(kind)
-    return kind
-  end,
-  ["text_symbol"] = function(kind)
-    local symbol = get_symbol(kind)
-    return fmt("%s %s", kind, symbol)
-  end,
-  ["symbol_text"] = function(kind)
-    local symbol = get_symbol(kind)
-    return fmt("%s %s", symbol, kind)
-  end,
-  ["symbol"] = function(kind)
-    local symbol = get_symbol(kind)
-    return fmt("%s", symbol)
-  end,
-}
+local misses = {}
 
--- default true
--- deprecated
-local function opt_with_text(opts)
-  return opts == nil or opts["with_text"] == nil or opts["with_text"]
-end
-
--- default 'symbol'
-local function opt_mode(opts)
-  local mode = "symbol"
-  if opt_with_text(opts) and opts ~= nil and opts["mode"] == nil then
-    mode = "symbol_text"
-  elseif opts ~= nil and opts["mode"] ~= nil then
-    mode = opts["mode"]
+local function dump_misses()
+  local misses_list = {}
+  for k, _ in pairs(misses) do
+    table.insert(misses_list, k)
   end
-  return mode
-end
-
--- default 'default'
-local function opt_preset(opts)
-  local preset
-  if opts == nil or opts["preset"] == nil then
-    preset = "default"
+  local json = vim.json.encode(misses_list)
+  local timestamp = vim.fn.strftime("%F-%T")
+  local filename = "/tmp/" .. os.getenv('USER') .. "_lspkind_misses_" .. timestamp .. ".json"
+  local file = io.open(filename, 'w')
+  if file then
+    file:write(tostring(json))
+    file:close()
   else
-    preset = opts["preset"]
+    vim.notify("dump_misses file open failed", vim.log.levels.ERROR)
   end
-  return preset
+end
+local function show_misses()
+  local misses_list = {}
+  for k, _ in pairs(misses) do
+    table.insert(misses_list, k)
+  end
+  vim.notify(vim.inspect(misses_list), vim.log.levels.INFO)
 end
 
-function lspkind.init(opts)
-  if opts ~= nil and opts["with_text"] ~= nil then
-    vim.api.nvim_command("echoerr 'DEPRECATED replaced by mode option.'")
+vim.api.nvim_create_user_command("DumpCompletionMisses", dump_misses, { nargs = 0 })
+vim.api.nvim_create_user_command("ShowCompletionMisses", show_misses, { nargs = 0 })
+
+local function heuristic(symbol)
+  if misses[symbol] == nil then
+    misses[symbol] = true
   end
-  local preset = opt_preset(opts)
+  -- TODO: do the regex-based heuristic
+  return symbol_preset.unknown
+end
 
-  local symbol_map = kind_presets[preset]
-  lspkind.symbol_map = (opts and opts["symbol_map"] and vim.tbl_extend("force", symbol_map, opts["symbol_map"]))
-    or symbol_map
+-- needed for some of the unknown symbols that come up time to time
+local function get_symbol(symbol)
+  return lspkind.symbol_map[symbol] or heuristic(symbol)
+end
 
+function lspkind.symbolic(kind, _)
+  return string.format("%s %s", get_symbol(kind), kind)
+end
+
+lspkind.symbol_map = nil
+
+function lspkind.setup(opts)
+  if not opts then opts = {} end
+  lspkind.symbol_map = vim.tbl_extend("force", symbol_preset, opts["symbol_map"])
   local symbols = {}
-  local len = kind_len
-  for i = 1, len do
+  for i = 1, #kind_order do
     local name = kind_order[i]
     symbols[i] = lspkind.symbolic(name, opts)
   end
-
   for k, v in pairs(symbols) do
     require("vim.lsp.protocol").CompletionItemKind[k] = v
   end
 end
 
-lspkind.presets = kind_presets
-lspkind.symbol_map = kind_presets.default
-
-function lspkind.symbolic(kind, opts)
-  local mode = opt_mode(opts)
-  local formatter = modes[mode]
-
-  -- if someone enters an invalid mode, default to symbol
-  if formatter == nil then
-    formatter = modes["symbol"]
-  end
-
-  return formatter(kind)
-end
 
 function lspkind.cmp_format(opts)
   if opts == nil then
     opts = {}
   end
-  if opts.preset or opts.symbol_map then
-    lspkind.init(opts)
+  if lspkind.symbol_map == nil and opts.preset or opts.symbol_map then
+    lspkind.setup(opts)
   end
 
   return function(entry, vim_item)
@@ -209,3 +223,5 @@ function lspkind.cmp_format(opts)
 end
 
 return lspkind
+
+-- vim: foldmethod=marker foldmarker={{{,}}}
