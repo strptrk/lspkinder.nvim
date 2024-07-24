@@ -19,6 +19,7 @@ This fork is only for myself. I advise against using it.
 Wherever you configure lsp put the following lua command:
 
 ```lua
+-- setup() is also available as an alias
 require('lspkind').init({
     symbol_map = {
       Text = "󰉿",
